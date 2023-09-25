@@ -1,11 +1,14 @@
 import faust
+import os
 import json
 from pymongo import MongoClient
-from decouple import config
+import dotenv
 
-MONGO_DB_URI = config('MONGO_DB_URI')
-MONGODB_DATABASE = config('MONGODB_DATABASE')
-MONGODB_COLLECTION = config('MONGODB_COLLECTION')
+dotenv.load_dotenv()
+
+MONGO_DB_URI = os.getenv('MONGO_DB_URI')
+MONGODB_DATABASE = os.getenv('MONGODB_DATABASE')
+MONGODB_COLLECTION = os.getenv('MONGODB_COLLECTION')
 
 client = MongoClient(MONGO_DB_URI)
 db = client[MONGODB_DATABASE]
@@ -17,22 +20,16 @@ app = faust.App(
     value_serializer='json',
 )
 
-topic = app.topic('probando')
-
-def insert_into_mongodb(data):
-    try:
-        collection.insert_one(data)
-    except Exception as e:
-        print(f"Error al insertar en MongoDB: {str(e)}")
+class NetData(faust.Record):
+    address: str
+    IPv4: str
+    
+topic = app.topic('probando', value_type=NetData)
 
 @app.agent(topic)
-async def process_messages(messages):
+async def process_data(messages):
     async for message in messages:
-        try:
-            insert_into_mongodb(message)
-            print('Received and processed message')
-        except Exception as e:
-            print(f"Error al procesar el mensaje: {str(e)}")
+        print(message)
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     app.main()
