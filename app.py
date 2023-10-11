@@ -5,6 +5,8 @@ import redis
 from pymongo import MongoClient
 import dotenv
 import redis
+import mysql.connector
+from create_table import create_mysql_table
 
 dotenv.load_dotenv()
 
@@ -16,7 +18,12 @@ REDIS_PORT = os.getenv('REDIS_PORT')
 REDIS_PASSWORD = os.getenv('REDIS_PASSWORD')
 KAFKA_HOST = os.getenv('KAFKA_HOST')
 KAFKA_PORT = os.getenv('KAFKA_PORT')
+MYSQL_HOST = os.getenv('MYSQL_HOST')
+MYSQL_USER = os.getenv('MYSQL_USER')
+MYSQL_PASSWORD = os.getenv('MYSQL_PASSWORD')
+MYSQL_DATABASE = os.getenv('MYSQL_DATABASE')
 
+create_mysql_table()
 client = MongoClient(MONGO_DB_URI)
 db = client[MONGODB_DATABASE]
 collection = db[MONGODB_COLLECTION]
@@ -26,11 +33,56 @@ redis_client = redis.Redis(
     port=REDIS_PORT,
     password=REDIS_PASSWORD)
 
+mysql_conn = mysql.connector.connect(
+    host=MYSQL_HOST,
+    user=MYSQL_USER,
+    password=MYSQL_PASSWORD,
+    database=MYSQL_DATABASE
+)
+
 app = faust.App(
     'my-kafka-consumer',
     broker=f'kafka://{KAFKA_HOST}:{KAFKA_PORT}',
     value_serializer='json',
 )
+
+
+async def store_data_in_mysql(data):
+    try:
+        cursor = mysql_conn.cursor()
+
+        insert_query = """
+        INSERT INTO users_data (
+            IBAN, IPv4, address, city, company, company_address, company_email, company_telfnumber, email, fullname, job, passport, salary, sex, telfnumber
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        
+        values = (
+            data.get('IBAN'),
+            data.get('IPv4'),
+            data.get('address'),
+            data.get('city'),
+            data.get('company'),
+            data.get('company address'),
+            data.get('company_email'),
+            data.get('company_telfnumber'),
+            data.get('email'),
+            data.get('fullname'),
+            data.get('job'),
+            data.get('passport'),
+            data.get('salary'),
+            data.get('sex'),
+            data.get('telfnumber')
+        )
+
+        cursor.execute(insert_query, values)
+        mysql_conn.commit()
+        cursor.close()
+
+        print("Datos almacenados en MySQL.")
+    except mysql.connector.Error as err:
+        print(f"Error al guardar en MySQL: {err}")
+
 
 async def store_data(data):
     collection.insert_one(data)
@@ -46,8 +98,12 @@ async def sort_and_send_data(data_list):
                 sorted_data = dict(sorted(merged_data.items()))
 
                 await store_data(sorted_data)
+                await store_data_in_mysql(sorted_data)
     except Exception:
         print("No se ha podido enviar a mongoDb")
+
+       
+
 
 probando_topic = app.topic('probando')
 
@@ -93,10 +149,14 @@ async def process_probando(probando_stream):
                 redis_client.hset(f'fullname: {fullname}', mapping=data)
 
             await sort_and_send_data(data)
+            store_data_in_mysql(data)
 
         except json.JSONDecodeError as e:
             print(f"Error al decodificar JSON: {e}, Data: {data}")
+    
+    mysql_conn.close()
 
 
 if __name__ == '__main__':
     app.main()
+
