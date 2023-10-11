@@ -32,6 +32,22 @@ app = faust.App(
     value_serializer='json',
 )
 
+async def store_data(data):
+    collection.insert_one(data)
+
+async def sort_and_send_data(data_list):
+    try:
+        if fullname := data_list.get('fullname'):
+            redis_client.hset(f'fullname: {fullname}', mapping=data_list)
+            if redis_client.exists(f'fullname: {fullname}') and redis_client.hlen(f'fullname: {fullname}') == 15:
+                hash_data = redis_client.hgetall(f'fullname: {fullname}')
+                merged_data = {key.decode('utf-8'): value.decode('utf-8') for key, value in hash_data.items()}
+                
+                sorted_data = dict(sorted(merged_data.items()))
+
+                await store_data(sorted_data)
+    except Exception:
+        print("No se ha podido enviar a mongoDb")
 
 probando_topic = app.topic('probando')
 
@@ -76,7 +92,7 @@ async def process_probando(probando_stream):
             elif fullname:
                 redis_client.hset(f'fullname: {fullname}', mapping=data)
 
-
+            await sort_and_send_data(data)
 
         except json.JSONDecodeError as e:
             print(f"Error al decodificar JSON: {e}, Data: {data}")
