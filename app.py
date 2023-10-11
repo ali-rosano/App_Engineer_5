@@ -1,6 +1,7 @@
 import faust
 import os
 import json
+import redis
 from pymongo import MongoClient
 import dotenv
 import redis
@@ -10,14 +11,24 @@ dotenv.load_dotenv()
 MONGO_DB_URI = os.getenv('MONGO_DB_URI')
 MONGODB_DATABASE = os.getenv('MONGODB_DATABASE')
 MONGODB_COLLECTION = os.getenv('MONGODB_COLLECTION')
+REDIS_HOST = os.getenv('REDIS_HOST')
+REDIS_PORT = os.getenv('REDIS_PORT')
+REDIS_PASSWORD = os.getenv('REDIS_PASSWORD')
+KAFKA_HOST = os.getenv('KAFKA_HOST')
+KAFKA_PORT = os.getenv('KAFKA_PORT')
 
 client = MongoClient(MONGO_DB_URI)
 db = client[MONGODB_DATABASE]
 collection = db[MONGODB_COLLECTION]
 
+redis_client = redis.Redis(
+    host=REDIS_HOST,
+    port=REDIS_PORT,
+    password=REDIS_PASSWORD)
+
 app = faust.App(
     'my-kafka-consumer',
-    broker='kafka://localhost:29092',
+    broker=f'kafka://{KAFKA_HOST}:{KAFKA_PORT}',
     value_serializer='json',
 )
 
