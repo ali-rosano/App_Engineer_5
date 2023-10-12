@@ -1,5 +1,6 @@
 from config.redis_server import redis_client
-from controllers.storeData import store_data
+from controllers.storeDataMongo import store_data_in_mongo
+from controllers.storeDataSQL import store_data_in_mysql
 
 async def sort_and_send_data(data_list, pack_data):
     try:
@@ -14,7 +15,8 @@ async def sort_and_send_data(data_list, pack_data):
                 redis_client.delete(redis_key)
 
                 if len(pack_data) == 5:
-                    await store_data(pack_data)
+                    await store_data_in_mongo(pack_data)
+                    store_data_in_mysql(pack_data)
                     pack_data.clear()
     except Exception as e:
-        print("No se ha podido enviar a mongoDb", {e})
+        print("No se ha podido enviar a MongoDB", {e})
