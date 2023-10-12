@@ -1,5 +1,6 @@
 from config.redis_server import redis_client
 from config.mongo_database import collection
+from controllers.storeDataSQL import store_data_in_mysql
 import time
 
 def watch_lonely_data():
@@ -14,7 +15,8 @@ def watch_lonely_data():
                     redis_client.delete(key)
                     
                     collection.insert_one(pack_data)
-                    print("Insercion en solitario! 🥹")
+                    store_data_in_mysql([pack_data])
+                    print("💥 Insert one element in MongoDb and MySQL 💥")
 
         except Exception as e:
             print(f"Error al procesar datos en Redis: {e}")
