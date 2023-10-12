@@ -164,5 +164,5 @@ test.py
 producer.py
 recupera.py
 schemas/
-
+*.lock
 
