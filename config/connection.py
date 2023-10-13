@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Environment variables
 MONGO_DB_URI = os.getenv('MONGO_DB_URI')
 MONGODB_DATABASE = os.getenv('MONGODB_DATABASE')
 MONGODB_COLLECTION = os.getenv('MONGODB_COLLECTION')
