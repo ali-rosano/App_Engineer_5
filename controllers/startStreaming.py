@@ -5,6 +5,38 @@ from controllers.classifyData import classify_data
 from controllers.createHash import create_hash_for_passport, create_hash_for_address, create_hash_for_fullname
 
 async def start_streaming(probando_stream):
+    """
+    Starts streaming and processing user data.
+
+    This async function takes in a stream of user data. 
+    It counts the records, classifies each one, creates Redis hashes,
+    batches data, and sends batches to MongoDB and MySQL.
+
+    The data is classified based on passport, address, or fullname.
+    Corresponding Redis hashes are created for each classified record.
+
+    Batched data is sent when the batch size reaches 5 records.
+
+    Any JSON or other errors are printed.
+
+    Args:
+    probando_stream: The stream of input user data
+
+    Returns:
+    None
+
+    Raises:
+    json.JSONDecodeError: If any JSON parsing errors occur
+
+    Example:
+
+    ```python
+    stream = get_user_data_stream()
+
+    await start_streaming(stream)
+    ```
+"""
+
     counter = 0
     pack_data = []
 

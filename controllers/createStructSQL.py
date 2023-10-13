@@ -1,6 +1,37 @@
 from config.mysql_database import mysql_conn
 
 def create_mysql_table():
+    """
+    Creates a MySQL table to store user data.
+
+    This function connects to a MySQL database, creates a table called 
+    'users_data' if it does not already exist, and adds columns for 
+    storing user information.
+
+    The table schema includes columns for IBAN, IP address, addresses, 
+    company info, contact details, passport number, salary, sex, etc.
+
+    The function handles any errors in creating the table and prints
+    the error.
+
+    Args:
+    None
+
+    Returns:
+    None
+
+    Raises:
+    Exception: Any errors creating the MySQL table are raised.
+
+    Example:
+    ```python
+    import mysql.connector
+
+    cnx = mysql.connector.connect(user='scott', database='mydb')
+    create_mysql_table()
+    ```
+"""
+
     try:
         mysql_cursor = mysql_conn.cursor()
 

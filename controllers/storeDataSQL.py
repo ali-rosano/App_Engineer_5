@@ -1,6 +1,37 @@
 from config.mysql_database import mysql_conn
 
 def store_data_in_mysql(data_list):
+    """
+    Stores batched user data in MySQL.
+
+    This function takes a batch of processed user data 
+    and inserts it into a MySQL table using executemany.
+
+    It first checks that the MySQL connection is alive,
+    then constructs the INSERT query with placeholders.
+
+    The data values are extracted from the input dicts
+    and inserted using the prepared query.
+
+    The connection is committed and closed at the end.
+
+    Args:
+    data_list (list): The batch of processed user data dicts
+
+    Returns:
+    None
+
+    Example:
+
+    ```python
+    user_data = [
+        {'name': 'John', 'age': 30},
+        {'name': 'Jane', 'age': 25}  
+    ]
+
+    store_data_in_mysql(user_data)
+    ```
+    """
     if not mysql_conn.is_connected():
         mysql_conn.ping(reconnect=True)
         
