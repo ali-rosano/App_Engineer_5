@@ -4,6 +4,37 @@ from controllers.storeDataSQL import store_data_in_mysql
 import time
 
 def watch_lonely_data():
+    """
+    Continuously checks for and processes lonely Redis hashes.
+
+    This function runs in an infinite loop to periodically check Redis 
+    for hashes with 15+ entries.
+
+    For any found, it extracts the hash data, 
+    sorts it, deletes the hash, 
+    stores the sorted data in MongoDB and MySQL,
+    and prints a message.
+
+    Any errors are printed but the loop continues.
+
+    The periodic check happens every 3 seconds.
+
+    Args:
+    None
+
+    Returns:
+    None
+
+    Raises:
+    Exception: Any uncaught exceptions are printed but
+                the loop continues.
+
+    Example:
+
+    ```python  
+    watch_lonely_data()
+    ```
+    """
     while True:
         try:
             keys = redis_client.keys('*')
