@@ -1,35 +1,22 @@
 import faust
-import os
-import json
-from pymongo import MongoClient
-import dotenv
-
-dotenv.load_dotenv()
-
-MONGO_DB_URI = os.getenv('MONGO_DB_URI')
-MONGODB_DATABASE = os.getenv('MONGODB_DATABASE')
-MONGODB_COLLECTION = os.getenv('MONGODB_COLLECTION')
-
-client = MongoClient(MONGO_DB_URI)
-db = client[MONGODB_DATABASE]
-collection = db[MONGODB_COLLECTION]
+import threading
+from controllers.startStreaming import start_streaming
+from config.mongo_database import collection
+from controllers.createStructSQL import create_mysql_table
+from controllers.watchLonelyData import watch_lonely_data
+from config.connection import KAFKA_HOST, KAFKA_PORT
 
 app = faust.App(
     'my-kafka-consumer',
-    broker='kafka://localhost:29092',
+    broker=f'kafka://{KAFKA_HOST}:{KAFKA_PORT}',
     value_serializer='json',
 )
 
-class NetData(faust.Record):
-    address: str
-    IPv4: str
-    
-topic = app.topic('probando', value_type=NetData)
-
-@app.agent(topic)
-async def process_data(messages):
-    async for message in messages:
-        print(message)
+probando_topic = app.topic('probando')
+create_mysql_table()
 
 if __name__ == '__main__':
+    redis_thread = threading.Thread(target=watch_lonely_data)
+    redis_thread.start()
+    app.agent(probando_topic)(start_streaming)
     app.main()
